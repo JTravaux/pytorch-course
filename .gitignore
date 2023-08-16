@@ -1,0 +1,17 @@
+# Ignore Conda environment files
+/env/
+/.conda/
+conda-meta/
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore Python virtual environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore any environment variable files
+.env
+.envrc
