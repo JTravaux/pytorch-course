@@ -32,3 +32,5 @@ Throughout the course, I used the following resources to help me with my learnin
 2. [Introduction to Python and Conda in VSCode](https://www.linkedin.com/pulse/introduction-python-conda-chris-mamon/): This follow-up article delves deeper into using Python and Conda in VSCode, helping you make the most out of these tools.
 
 3. [TensorFlow Playground](https://playground.tensorflow.org/): This interactive website allows you to visualize the effects of different hyperparameters on a neural network. It's a great way to get a feel for how neural networks work.
+
+4. [PyTorch Documentation](https://pytorch.org/docs/stable/index.html): This is the official documentation for PyTorch. It's a great resource to refer to when you're stuck on a particular concept, or if you want to learn more about a particular function.
