@@ -11,7 +11,6 @@ from torch import nn
 
 import os
 import zipfile
-
 from pathlib import Path
 
 import requests
@@ -301,3 +300,107 @@ def download_data(source: str,
             os.remove(data_path / target_file)
     
     return image_path
+
+def eval_model(
+        model: torch.nn.Module, 
+        data_loader: torch.utils.data.DataLoader,
+        start_time: float,
+        end_time: float, 
+        loss_fn: torch.nn.Module,
+        device = "cpu",
+        accuracy_fn = accuracy_fn):
+    """Returns a dictionary containing the results of model predictions on data_loader."""
+    loss, acc = 0, 0
+    model.to(device)
+    model.eval()
+
+    with torch.inference_mode():
+        for X, y in data_loader:
+            X, y = X.to(device), y.to(device)
+            y_logits = model(X)
+
+            loss += loss_fn(y_logits, y)
+            acc += accuracy_fn(y_true=y, y_pred=y_logits.argmax(dim=1))
+
+        # Scale loss and acc by number of batches
+        loss /= len(data_loader)
+        acc /= len(data_loader)
+
+    return {
+        "model_obj": model,
+        "model_name": model.__class__.__name__,
+        "loss": loss.item(),
+        "acc": acc,
+        "device": device,
+        "train_time": end_time - start_time,
+    }
+
+def train_step(model: torch.nn.Module, 
+               data_loader: torch.utils.data.DataLoader, 
+               loss_fn: torch.nn.Module, 
+               optimizer: torch.optim.Optimizer, 
+               device = "cpu", 
+               accuracy_fn = accuracy_fn,
+               verbose: bool = True):
+    """Performs a single training step (forward pass, backward pass, weights update) and returns the loss and accuracy for the batch."""
+
+    model.train()
+    model.to(device)
+    train_loss, train_acc = 0.0, 0.0
+
+    for batch, (X, y) in enumerate(data_loader):
+        X, y = X.to(device), y.to(device)
+
+        y_pred = model(X)
+        loss = loss_fn(y_pred, y)
+
+        train_acc +=  accuracy_fn(y_true=y, y_pred=y_pred.argmax(dim=1))
+        train_loss += loss.item()
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    train_loss /= len(data_loader)
+    train_acc /= len(data_loader)
+
+    if verbose:
+        print(f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
+
+    return {
+        "train_loss": train_loss,
+        "train_acc": train_acc,
+    }
+
+def test_step(model: torch.nn.Module, 
+              data_loader: torch.utils.data.DataLoader, 
+              loss_fn: torch.nn.Module, 
+              device = "cpu", 
+              accuracy_fn = accuracy_fn,
+              verbose: bool = True):
+    """Performs a single evaluation step (forward pass) and returns the loss and accuracy for the batch."""
+
+    model.eval()
+    model.to(device)
+    test_loss, test_acc = 0.0, 0.0
+
+    with torch.inference_mode():
+        for X, y in data_loader:
+            X, y = X.to(device), y.to(device)
+
+            y_pred = model(X)
+            loss = loss_fn(y_pred, y)
+
+            test_acc +=  accuracy_fn(y_true=y, y_pred=y_pred.argmax(dim=1))
+            test_loss += loss.item()
+
+    test_loss /= len(data_loader)
+    test_acc /= len(data_loader)
+
+    if verbose:
+        print(f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.2f}%")
+
+    return {
+        "test_loss": test_loss,
+        "test_acc": test_acc,
+    }

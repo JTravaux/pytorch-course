@@ -15,3 +15,5 @@ __pycache__/
 # Ignore any environment variable files
 .env
 .envrc
+
+data/
