@@ -34,3 +34,5 @@ Throughout the course, I used the following resources to help me with my learnin
 3. [TensorFlow Playground](https://playground.tensorflow.org/): This interactive website allows you to visualize the effects of different hyperparameters on a neural network. It's a great way to get a feel for how neural networks work.
 
 4. [PyTorch Documentation](https://pytorch.org/docs/stable/index.html): This is the official documentation for PyTorch. It's a great resource to refer to when you're stuck on a particular concept, or if you want to learn more about a particular function.
+
+5. [CNN Explainer](https://poloclub.github.io/cnn-explainer/) This interactive website allows you to visualize the effects of different hyperparameters on a convolutional neural network. It's a great way to get a feel for how convolutional neural networks work.

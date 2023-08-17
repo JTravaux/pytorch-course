@@ -40,7 +40,7 @@ from torchvision import datasets, transforms
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 from models import FashionMNISTModelV0, FashionMNISTModelV1, FashionMNISTModelV2
-from helper_functions import accuracy_fn, print_train_time, eval_model, train_step, test_step
+from helper_functions import eval_model, train_step, test_step, print_eval_results_table, save_best_model
 
 # Versions
 print(torch.__version__)
@@ -137,12 +137,12 @@ print(train_images.shape, train_labels.shape) # 32 images, 1 channel, 28x28 pixe
 # 2. Create Model(s)
 # ===================
 models = [
-    FashionMNISTModelV0(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)),
-    FashionMNISTModelV1(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)),
-    FashionMNISTModelV2(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)),
-    FashionMNISTModelV0(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)).to(device),
-    FashionMNISTModelV1(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)).to(device),
-    FashionMNISTModelV2(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)).to(device),
+    # FashionMNISTModelV0(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)),
+    # FashionMNISTModelV1(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)),
+    FashionMNISTModelV2(input_shape=1, hidden_units=32, output_shape=len(train_data.classes)),
+    # FashionMNISTModelV0(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)).to(device),
+    # FashionMNISTModelV1(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)).to(device),
+    FashionMNISTModelV2(input_shape=1, hidden_units=32, output_shape=len(train_data.classes)).to(device),
 ]
 
 # Loss function (optimizer is defined later)
@@ -151,7 +151,7 @@ loss_fn = nn.CrossEntropyLoss() # Since we're doing multi-class classification, 
 # ===================
 # 3. Train Model
 # ===================
-EPOCHS = 5
+EPOCHS = 3
 
 # The optimizer will update the model's parameters once per batch rather than once per epoch
 # This is called mini-batch gradient descent
@@ -161,15 +161,15 @@ EPOCHS = 5
 # 3. Loop through test batches, perform evaluation steps, calculate the test loss per batch
 # 4. Print out what's happening
 eval_results = []
-verbose = False
+verbose = True
 
 print(f"Starting training of {len(models)} models...")
 
 for idx, model in enumerate(models):
     device = next(model.parameters()).device
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1) # Stochastic Gradient Descent
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01) # Stochastic Gradient Descent
 
-    print(f"\nTraining model #{idx} ({model.__class__.__name__}) on {device}...")
+    print(f"\nTraining model {idx + 1}/{len(models)} ({model.__class__.__name__}) on {device}...")
 
     start_time = time.time()
 
@@ -184,20 +184,5 @@ print("\n=====================")
 print("Training Complete")
 print("=====================")
 
-# Make a table of the results, sorted by acc and time
-eval_results.sort(key=lambda x: x["acc"], reverse=True)
-
-# Print the table headers with spaces between each column using {:<10} for each column
-print("\n{:<20} {:<10} {:<15} {:<10} {:<10}".format("Model", "Device", "Accuracy (%)", "Loss", "Train Time (s)"))
-print("-" * 70)
-
-# Print the table rows
-for result in eval_results:
-    print(f"{result['model_name']:<20} {str(result['device']):<10} {result['acc']:<15.2f} {result['loss']:<10.2f} {result['train_time']:<10.2f}")
-
-# Save the best model
-torch.save(eval_results[0]["model_obj"].state_dict(), f"models/03_fashion_mnist_model_best.pth")
-
-# Save the evaluation results to file
-with open("data/FashionMNIST/model_eval_results.txt", "w") as f:
-    f.write(str(eval_results))
+print_eval_results_table(eval_results)
+save_best_model(eval_results=eval_results, model_name="03_fashion_mnist_model_best", models_dir="models", results_dir="data/FashionMNIST")

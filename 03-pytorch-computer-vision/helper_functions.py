@@ -3,6 +3,7 @@ A series of helper functions used throughout the course.
 
 If a function gets defined once and could be used over and over, it'll go in here.
 """
+import time
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
@@ -404,3 +405,64 @@ def test_step(model: torch.nn.Module,
         "test_loss": test_loss,
         "test_acc": test_acc,
     }
+
+
+def print_eval_results_table(eval_results: List[dict]) -> None:
+    """Prints a table of eval_results.
+
+    Args:
+        eval_results (List[dict]): A list of dictionaries containing model evaluation results.
+    """
+    # Make a table of the results, sorted by acc and time
+    eval_results.sort(key=lambda x: x["acc"], reverse=True)
+
+    # Print the table headers with spaces between each column using {:<10} for each column
+    print("\n{:<20} {:<10} {:<15} {:<10} {:<10}".format("Model", "Device", "Accuracy (%)", "Loss", "Train Time (s)"))
+    print("-" * 70)
+
+    # Print the table rows
+    for result in eval_results:
+        print(f"{result['model_name']:<20} {str(result['device']):<10} {result['acc']:<15.2f} {result['loss']:<10.2f} {result['train_time']:<10.2f}")
+
+def save_best_model(eval_results: List[dict], model_name: str, models_dir="models", results_dir: str = "data") -> None:
+    results_file = f"{results_dir}/model_eval_results"
+    results_file_acc = f"{results_dir}/model_eval_results_acc.txt"
+
+    # Sort eval_results by accuracy
+    eval_results.sort(key=lambda x: x["acc"], reverse=True)
+
+    # Check if RESULTS_FILE_ACC exists, if not, create it
+    if not os.path.exists(results_file_acc):
+        with open(results_file_acc, "w") as f:
+            f.write("")
+        best_acc = None
+    else:
+        with open(results_file_acc, "r") as f:
+            best_acc = f.read()
+            if best_acc == "":
+                best_acc = None
+            else:
+                best_acc = float(best_acc)
+
+    if not best_acc:
+        print("\nNo best accuracy found, saving current model...")
+    else:
+        print(f"\nBest accuracy so far: {best_acc:.2f}%")
+
+    current_best = eval_results[0]["acc"]
+    print(f"Current best accuracy: {current_best:.2f}%")
+
+    # If the best model's accuracy is less than the current model's accuracy, save the current model & update the best accuracy
+    if not best_acc or current_best > best_acc:
+        torch.save(eval_results[0]["model_obj"].state_dict(), f"{models_dir}/{model_name}.pth")
+
+        with open(results_file_acc, "w") as f:
+            f.write(str(current_best))
+
+        print(f"Saved model to {models_dir}/{model_name}.pth")
+    else:
+        print("Current model's accuracy is less than the best model's accuracy, not saving...")
+
+    with open(f"{results_file}_{time.strftime('%d-%m-%Y_%H-%M-%S')}.txt", "w") as f:
+        f.write(str(eval_results))
+        
