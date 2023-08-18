@@ -84,18 +84,18 @@ print(train_data.class_to_idx) # The classes in the dataset
 # plt.show()
 
 # Visualize the data as a grid of images
-rows, cols = 4, 4
-fig = plt.figure(figsize=(cols * 2, rows * 2))
+# rows, cols = 4, 4
+# fig = plt.figure(figsize=(cols * 2, rows * 2))
 
-for i in range(1, rows * cols + 1):
-    randomIndex = torch.randint(len(train_data), size=([1])).item()
-    image, label = train_data[randomIndex]
-    fig.add_subplot(rows, cols, i)
-    plt.imshow(image.squeeze(), cmap="gray")
-    plt.title(train_data.classes[label])
-    plt.axis(False)
+# for i in range(1, rows * cols + 1):
+#     randomIndex = torch.randint(len(train_data), size=([1])).item()
+#     image, label = train_data[randomIndex]
+#     fig.add_subplot(rows, cols, i)
+#     plt.imshow(image.squeeze(), cmap="gray")
+#     plt.title(train_data.classes[label])
+#     plt.axis(False)
 
-plt.show()
+# plt.show()
 
 # Looks like some of the images/labels are similar, but not the same. For example, the shirt and coat look similar, but are different classes.
 # Will this cause problems for our model? Can this be modelled with pure linear lines? Or will we need non-linearaities?
@@ -139,7 +139,7 @@ print(train_images.shape, train_labels.shape) # 32 images, 1 channel, 28x28 pixe
 models = [
     # FashionMNISTModelV0(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)),
     # FashionMNISTModelV1(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)),
-    FashionMNISTModelV2(input_shape=1, hidden_units=32, output_shape=len(train_data.classes)),
+    # FashionMNISTModelV2(input_shape=1, hidden_units=10, output_shape=len(train_data.classes)),
     # FashionMNISTModelV0(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)).to(device),
     # FashionMNISTModelV1(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)).to(device),
     FashionMNISTModelV2(input_shape=1, hidden_units=32, output_shape=len(train_data.classes)).to(device),
@@ -151,7 +151,7 @@ loss_fn = nn.CrossEntropyLoss() # Since we're doing multi-class classification, 
 # ===================
 # 3. Train Model
 # ===================
-EPOCHS = 3
+EPOCHS = 30
 
 # The optimizer will update the model's parameters once per batch rather than once per epoch
 # This is called mini-batch gradient descent
@@ -167,7 +167,7 @@ print(f"Starting training of {len(models)} models...")
 
 for idx, model in enumerate(models):
     device = next(model.parameters()).device
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01) # Stochastic Gradient Descent
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01) # Stochastic Gradient Descent
 
     print(f"\nTraining model {idx + 1}/{len(models)} ({model.__class__.__name__}) on {device}...")
 

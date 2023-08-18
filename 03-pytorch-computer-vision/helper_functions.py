@@ -328,7 +328,6 @@ def eval_model(
         acc /= len(data_loader)
 
     return {
-        "model_obj": model,
         "model_name": model.__class__.__name__,
         "loss": loss.item(),
         "acc": acc,

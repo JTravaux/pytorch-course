@@ -40,12 +40,17 @@ class FashionMNISTModelV2(nn.Module):
 
         # Feature extractor layer
         self.conv_block_1 = nn.Sequential(
-            nn.Conv2d(in_channels=input_shape, out_channels=hidden_units, kernel_size=3, padding=1, stride=1),
+            nn.Conv2d( # 2d is for two-dimensional data, such as images (our images have two dimensions: height and width. Yes, there's color channel dimension but each of the color channel dimensions have two dimensions too: height and width). For other dimensional data (such as 1D for text or 3D for 3D objects) there's also nn.Conv1d() and nn.Conv3d().
+                in_channels=input_shape,
+                out_channels=hidden_units,
+                kernel_size=3, # often also referred to as filter size, refers to the dimensions of the sliding window over the input. A smaller kernel size also leads to a smaller reduction in layer dimensions, which allows for a deeper architecture. Conversely, a large kernel size extracts less information, which leads to a faster reduction in layer dimensions, often leading to worse performance. Large kernels are better suited to extract features that are larger.
+                padding=1, # Padding conserves data at the borders of activation maps, which leads to better performance, and it can help preserve the input's spatial size, which allows an architecture designer to build depper, higher performing networks
+                stride=1), # Stride indicates how many pixels the kernel should be shifted over at a time. As stride is decreased, more features are learned because more data is extracted, which also leads to larger output layers. On the contrary, as stride is increased, this leads to more limited feature extraction and smaller output layer dimensions.
             nn.ReLU(),
 
             nn.Conv2d(in_channels=hidden_units, out_channels=hidden_units, kernel_size=3, padding=1, stride=1),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2), # Takes the max value from a 2x2 grid of pixels
+            nn.MaxPool2d(kernel_size=2, stride=2), # Takes the max value from a 2x2 grid of pixels.. purpose of gradually decreasing the spatial extent of the network, which reduces the parameters and overall computation of the network
         )
 
         # Feature extractor layer
@@ -55,7 +60,7 @@ class FashionMNISTModelV2(nn.Module):
 
             nn.Conv2d(in_channels=hidden_units, out_channels=hidden_units, kernel_size=3, padding=1, stride=1),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
+            nn.MaxPool2d(kernel_size=2, stride=2),
         )
 
         # Classifier layer
