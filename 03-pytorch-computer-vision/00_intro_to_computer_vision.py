@@ -153,7 +153,14 @@ models = [
     # FashionMNISTModelV0(input_shape=28*28, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)).to(device),
     # FashionMNISTModelV1(input_shape=28*28, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)).to(device),
     # FashionMNISTModelV2(input_shape=1, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)).to(device),
-    live_model,
+    {
+        "model": live_model,
+        "optimizer": torch.optim.Adam(live_model.parameters(), lr=0.001),
+    },
+    #  {
+    #     "model": live_model,
+    #     "optimizer": torch.optim.SGD(live_model.parameters(), lr=0.001),
+    # },
 ]
 
 # Loss function (optimizer is defined later)
@@ -162,7 +169,7 @@ loss_fn = nn.CrossEntropyLoss() # Since we're doing multi-class classification, 
 # ===================
 # 3. Train Model
 # ===================
-EPOCHS = 5
+EPOCHS = 1
 
 # The optimizer will update the model's parameters once per batch rather than once per epoch
 # This is called mini-batch gradient descent
@@ -173,27 +180,29 @@ EPOCHS = 5
 # 4. Print out what's happening
 eval_results = []
 verbose = True
-train_model = False
+train_model = True
 
 if train_model:
     print(f"Starting training of {len(models)} models...")
-    for idx, model in enumerate(models):
+    for idx, model_item in enumerate(models):
+        model = model_item["model"]
         device = next(model.parameters()).device
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.1) # Stochastic Gradient Descent
-
         print(f"\nTraining model {idx + 1}/{len(models)} ({model.__class__.__name__}) on {device}...")
 
         start_time = time.time()
 
         for epoch in range(EPOCHS):   
             print(f"Running Epoch: {epoch+1}/{EPOCHS}...")
-            train_step(model=model, data_loader=train_dataloader, loss_fn=loss_fn, optimizer=optimizer, device=device, verbose=verbose)
+            train_step(model=model, data_loader=train_dataloader, loss_fn=loss_fn, optimizer=model_item["optimizer"], device=device, verbose=verbose)
             test_step(model=model, data_loader=test_dataloader, loss_fn=loss_fn, device=device, verbose=verbose)
 
-        eval_results.append(eval_model(model=model, data_loader=test_dataloader, loss_fn=loss_fn, device=device, start_time=start_time, end_time=time.time()))
+        eval_results.append(eval_model(model=model, data_loader=test_dataloader, loss_fn=loss_fn, optimizer=model_item["optimizer"], device=device, start_time=start_time, end_time=time.time(), epochs=EPOCHS))
 
     print("\n=====================")
     print("Training Complete")
+    print("=====================")
+    print(f"Models trained: {len(models)}")
+    print(f"Number of epochs: {EPOCHS}")
     print("=====================")
 
     print_eval_results_table(eval_results)
@@ -280,6 +289,8 @@ else:
     confmat = ConfusionMatrix(num_classes=len(test_data.classes), task="multiclass")
     confmat_tensor = confmat(preds=y_pred_tensor,
                             target=test_data.targets)
+    
+    print(f"Confusion matrix:\n{confmat_tensor}")
 
     # 3. Plot the confusion matrix
     fig, ax = plot_confusion_matrix(

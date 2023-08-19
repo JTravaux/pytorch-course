@@ -308,6 +308,8 @@ def eval_model(
         start_time: float,
         end_time: float, 
         loss_fn: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+        epochs: int,
         device = "cpu",
         accuracy_fn = accuracy_fn):
     """Returns a dictionary containing the results of model predictions on data_loader."""
@@ -332,7 +334,9 @@ def eval_model(
         "model_name": model.__class__.__name__,
         "loss": loss.item(),
         "acc": acc,
+        "epochs": epochs,
         "device": device,
+        "optimizer": optimizer,
         "train_time": end_time - start_time,
     }
 
@@ -417,12 +421,15 @@ def print_eval_results_table(eval_results: List[dict]) -> None:
     eval_results.sort(key=lambda x: x["acc"], reverse=True)
 
     # Print the table headers with spaces between each column using {:<10} for each column
-    print("\n{:<20} {:<10} {:<15} {:<10} {:<10}".format("Model", "Device", "Accuracy (%)", "Loss", "Train Time (s)"))
-    print("-" * 70)
+    print("\n{:<20} {:<10} {:<15} {:<10} {:<20} {:<15} {:<15}".format("Model", "Device", "Accuracy (%)", "Loss", "Train Time (s)", "Optimizer", "LR"))
+    print("-" * 110)
+
 
     # Print the table rows
     for result in eval_results:
-        print(f"{result['model_name']:<20} {str(result['device']):<10} {result['acc']:<15.2f} {result['loss']:<10.2f} {result['train_time']:<10.2f}")
+        learning_rate = result["optimizer"].state_dict()["param_groups"][0]["lr"]
+        optimizer_name = result["optimizer"].__class__.__name__
+        print(f"{result['model_name']:<20} {str(result['device']):<10} {result['acc']:<15.2f} {result['loss']:<10.2f} {result['train_time']:<20.2f} {optimizer_name:<15} {learning_rate:<15.5f}")
 
 def save_best_model(eval_results: List[dict], model_name: str, models_dir="models", results_dir: str = "data") -> None:
     results_file = f"{results_dir}/model_eval_results"
