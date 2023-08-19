@@ -354,6 +354,7 @@ def train_step(model: torch.nn.Module,
     train_loss, train_acc = 0.0, 0.0
 
     for batch, (X, y) in enumerate(data_loader):
+        print(f"Processing batch {batch} of {len(data_loader)}...")
         X, y = X.to(device), y.to(device)
 
         y_pred = model(X)
@@ -365,6 +366,8 @@ def train_step(model: torch.nn.Module,
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+        print(f"Batch {batch} | Train Loss: {loss.item():.4f} | Train Acc: {train_acc / (batch + 1):.2f}%")
 
     train_loss /= len(data_loader)
     train_acc /= len(data_loader)
@@ -499,3 +502,23 @@ def make_predictions(model: torch.nn.Module,
             pred_probs_list.append(pred_probs.cpu())
         
     return torch.stack(pred_probs_list)
+
+def show_image(image_tensor: torch.Tensor, 
+               label: str = None, 
+               prediction: str = None, 
+               prediction_prob: float = None):
+    """Plots a single image tensor with optional label and model prediction.
+
+    Args:
+        image_tensor (torch.Tensor): image tensor to plot.
+        label (str, optional): label of image. Defaults to None.
+        prediction (str, optional): model prediction of image. Defaults to None.
+        prediction_prob (float, optional): model prediction probability of image. Defaults to None.
+    """
+    plt.imshow(image_tensor.permute(1, 2, 0))
+    plt.axis(False)
+    if label:
+        plt.title(f"Label: {label}")
+    if prediction:
+        plt.xlabel(f"Prediction: {prediction}, Prob: {prediction_prob:.2f}")
+    plt.show()
