@@ -5,7 +5,7 @@ This repository contains the code for the PyTorch Introduction course. All code 
 - [x] 00: Fundamentals
 - [x] 01: PyTorch Workflow
 - [x] 02: Classification Models (Binary & Multiclass)
-- [ ] 03: Computer Vision
+- [x] 03: Computer Vision
 - [ ] 04: Custom Datasets & DataLoaders
 - [ ] 05: Going Modular
 - [ ] 06: Transfer Learning

@@ -1,5 +1,6 @@
 # Ignore Conda environment files
 /env/
+/pytorch-env/
 /.conda/
 conda-meta/
 

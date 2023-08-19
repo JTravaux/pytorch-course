@@ -157,10 +157,26 @@ models = [
         "model": live_model,
         "optimizer": torch.optim.Adam(live_model.parameters(), lr=0.001),
     },
-    #  {
-    #     "model": live_model,
-    #     "optimizer": torch.optim.SGD(live_model.parameters(), lr=0.001),
-    # },
+     {
+        "model": live_model,
+        "optimizer": torch.optim.SGD(live_model.parameters(), lr=0.001),
+    },
+     {
+        "model": live_model,
+        "optimizer": torch.optim.Adam(live_model.parameters(), lr=0.01),
+    },
+     {
+        "model": live_model,
+        "optimizer": torch.optim.SGD(live_model.parameters(), lr=0.01),
+    },
+     {
+        "model": live_model,
+        "optimizer": torch.optim.Adam(live_model.parameters(), lr=0.0001),
+    },
+     {
+        "model": live_model,
+        "optimizer": torch.optim.SGD(live_model.parameters(), lr=0.0001),
+    },
 ]
 
 # Loss function (optimizer is defined later)
@@ -169,7 +185,7 @@ loss_fn = nn.CrossEntropyLoss() # Since we're doing multi-class classification, 
 # ===================
 # 3. Train Model
 # ===================
-EPOCHS = 1
+EPOCHS = 50
 
 # The optimizer will update the model's parameters once per batch rather than once per epoch
 # This is called mini-batch gradient descent
