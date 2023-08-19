@@ -28,6 +28,7 @@
 # torchvision.utils.data.DataLoader - Makes your image data batches iterable
 
 # PyTorch
+import random
 import time
 import torch
 from torch import nn
@@ -35,12 +36,14 @@ from torch import nn
 # Torchvision
 import torchvision
 from torchvision import datasets, transforms
+from torchmetrics import ConfusionMatrix
 
 # Other
+from mlxtend.plotting import plot_confusion_matrix
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 from models import FashionMNISTModelV0, FashionMNISTModelV1, FashionMNISTModelV2
-from helper_functions import eval_model, train_step, test_step, print_eval_results_table, save_best_model
+from helper_functions import eval_model, train_step, test_step, print_eval_results_table, save_best_model, make_predictions
 
 # Versions
 print(torch.__version__)
@@ -136,13 +139,21 @@ print(train_images.shape, train_labels.shape) # 32 images, 1 channel, 28x28 pixe
 # ===================
 # 2. Create Model(s)
 # ===================
+HIDDEN_UNITS = 64
+retrain = True
+
+live_model = FashionMNISTModelV2(input_shape=1, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)).to(device)
+if retrain:
+    live_model.load_state_dict(torch.load("models/03_fashion_mnist_model_best.pth"))
+
 models = [
-    # FashionMNISTModelV0(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)),
-    # FashionMNISTModelV1(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)),
-    # FashionMNISTModelV2(input_shape=1, hidden_units=10, output_shape=len(train_data.classes)),
-    # FashionMNISTModelV0(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)).to(device),
-    # FashionMNISTModelV1(input_shape=28*28, hidden_units=32, output_shape=len(train_data.classes)).to(device),
-    FashionMNISTModelV2(input_shape=1, hidden_units=32, output_shape=len(train_data.classes)).to(device),
+    # FashionMNISTModelV0(input_shape=28*28, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)),
+    # FashionMNISTModelV1(input_shape=28*28, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)),
+    # FashionMNISTModelV2(input_shape=1, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)),
+    # FashionMNISTModelV0(input_shape=28*28, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)).to(device),
+    # FashionMNISTModelV1(input_shape=28*28, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)).to(device),
+    # FashionMNISTModelV2(input_shape=1, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)).to(device),
+    live_model,
 ]
 
 # Loss function (optimizer is defined later)
@@ -151,7 +162,7 @@ loss_fn = nn.CrossEntropyLoss() # Since we're doing multi-class classification, 
 # ===================
 # 3. Train Model
 # ===================
-EPOCHS = 30
+EPOCHS = 5
 
 # The optimizer will update the model's parameters once per batch rather than once per epoch
 # This is called mini-batch gradient descent
@@ -162,27 +173,120 @@ EPOCHS = 30
 # 4. Print out what's happening
 eval_results = []
 verbose = True
+train_model = False
 
-print(f"Starting training of {len(models)} models...")
+if train_model:
+    print(f"Starting training of {len(models)} models...")
+    for idx, model in enumerate(models):
+        device = next(model.parameters()).device
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.1) # Stochastic Gradient Descent
 
-for idx, model in enumerate(models):
-    device = next(model.parameters()).device
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01) # Stochastic Gradient Descent
+        print(f"\nTraining model {idx + 1}/{len(models)} ({model.__class__.__name__}) on {device}...")
 
-    print(f"\nTraining model {idx + 1}/{len(models)} ({model.__class__.__name__}) on {device}...")
+        start_time = time.time()
 
-    start_time = time.time()
+        for epoch in range(EPOCHS):   
+            print(f"Running Epoch: {epoch+1}/{EPOCHS}...")
+            train_step(model=model, data_loader=train_dataloader, loss_fn=loss_fn, optimizer=optimizer, device=device, verbose=verbose)
+            test_step(model=model, data_loader=test_dataloader, loss_fn=loss_fn, device=device, verbose=verbose)
 
-    for epoch in range(EPOCHS):   
-        print(f"Running Epoch: {epoch+1}/{EPOCHS}...")
-        train_step(model=model, data_loader=train_dataloader, loss_fn=loss_fn, optimizer=optimizer, device=device, verbose=verbose)
-        test_step(model=model, data_loader=test_dataloader, loss_fn=loss_fn, device=device, verbose=verbose)
+        eval_results.append(eval_model(model=model, data_loader=test_dataloader, loss_fn=loss_fn, device=device, start_time=start_time, end_time=time.time()))
 
-    eval_results.append(eval_model(model=model, data_loader=test_dataloader, loss_fn=loss_fn, device=device, start_time=start_time, end_time=time.time()))
+    print("\n=====================")
+    print("Training Complete")
+    print("=====================")
 
-print("\n=====================")
-print("Training Complete")
-print("=====================")
+    print_eval_results_table(eval_results)
+    save_best_model(eval_results=eval_results, model_name="03_fashion_mnist_model_best", models_dir="models", results_dir="data/FashionMNIST")
+else:
+    print("Loading trained model...")
+    model = FashionMNISTModelV2(input_shape=1, hidden_units=HIDDEN_UNITS, output_shape=len(train_data.classes)).to(device)
+    model.load_state_dict(torch.load("models/03_fashion_mnist_model_best.pth"))
+    
+    # Make predictions on a batch of images
+    model.eval()
 
-print_eval_results_table(eval_results)
-save_best_model(eval_results=eval_results, model_name="03_fashion_mnist_model_best", models_dir="models", results_dir="data/FashionMNIST")
+    with torch.inference_mode():
+        test_images, test_labels = next(iter(test_dataloader))
+        test_images, test_labels = test_images.to(device), test_labels.to(device)
+        test_preds = model(test_images)
+
+    test_samples = []
+    test_labels = []
+
+    for sample, label in random.sample(list(test_data), k=9):
+        test_samples.append(sample)
+        test_labels.append(label)
+
+    plt.imshow(test_samples[0][0].squeeze(), cmap="gray")
+    plt.title(test_data.classes[test_labels[0]])
+    plt.axis(False)
+    plt.show()
+
+    # Make predictions on a batch of images
+    pred_probs = make_predictions(model=model, data=test_samples, device=device)
+    print(pred_probs[:2])
+
+    # Get the predicted labels
+    pred_labels = torch.argmax(pred_probs, dim=1)
+    print(pred_labels)
+
+    # Get the predicted class names
+    pred_class_names = [test_data.classes[label] for label in pred_labels]
+    print(pred_class_names)
+
+    # Visualize the data as a grid of images
+    rows, cols = 4, 4
+    fig = plt.figure(figsize=(cols * 2, rows * 2))
+
+    for i in enumerate(test_samples):
+        fig.add_subplot(rows, cols, i[0] + 1)
+        plt.imshow(i[1][0].squeeze(), cmap="gray")
+        true_label = test_data.classes[test_labels[i[0]]]
+        pred_label = pred_class_names[i[0]]
+
+        if true_label == pred_label:
+            plt.title(f"{pred_label}", color="green")
+        else:
+            plt.title(f"{pred_label}", color="red")
+               
+        plt.axis(False)
+
+    plt.show()
+
+    # confusion matrix: https://en.wikipedia.org/wiki/Confusion_matrix
+    # 1. Make predictions on a batch of images
+    # 2. Make a confusion matrix
+    # 3. Visualize the confusion matrix 
+
+    y_preds = []
+    model.eval()
+    with torch.inference_mode():
+        for X, y in tqdm(test_dataloader, desc="Making predictions"):
+            # Send data and targets to target device
+            X, y = X.to(device), y.to(device)
+            # Do the forward pass
+            y_logit = model(X)
+            # Turn predictions from logits -> prediction probabilities -> predictions labels
+            y_pred = torch.softmax(y_logit, dim=1).argmax(dim=1)
+            # Put predictions on CPU for evaluation
+            y_preds.append(y_pred.cpu())
+
+    # Concatenate list of predictions into a tensor
+    y_pred_tensor = torch.cat(y_preds)
+    print(f"y_pred_tensor: {y_pred_tensor}")
+
+    # 2. Setup confusion matrix instance and compare predictions to targets
+    confmat = ConfusionMatrix(num_classes=len(test_data.classes), task="multiclass")
+    confmat_tensor = confmat(preds=y_pred_tensor,
+                            target=test_data.targets)
+
+    # 3. Plot the confusion matrix
+    fig, ax = plot_confusion_matrix(
+        conf_mat=confmat_tensor.numpy(), # matplotlib likes working with NumPy 
+        class_names=test_data.classes, # turn the row and column labels into class names
+        figsize=(10, 7)
+    );
+
+    plt.show()
+        

@@ -50,7 +50,7 @@ class FashionMNISTModelV2(nn.Module):
 
             nn.Conv2d(in_channels=hidden_units, out_channels=hidden_units, kernel_size=3, padding=1, stride=1),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2), # Takes the max value from a 2x2 grid of pixels.. purpose of gradually decreasing the spatial extent of the network, which reduces the parameters and overall computation of the network
+            nn.MaxPool2d(kernel_size=2), # Takes the max value from a 2x2 grid of pixels.. purpose of gradually decreasing the spatial extent of the network, which reduces the parameters and overall computation of the network
         )
 
         # Feature extractor layer
@@ -60,7 +60,7 @@ class FashionMNISTModelV2(nn.Module):
 
             nn.Conv2d(in_channels=hidden_units, out_channels=hidden_units, kernel_size=3, padding=1, stride=1),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.MaxPool2d(kernel_size=2),
         )
 
         # Classifier layer

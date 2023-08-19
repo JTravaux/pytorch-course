@@ -328,6 +328,7 @@ def eval_model(
         acc /= len(data_loader)
 
     return {
+        "model_obj": model,
         "model_name": model.__class__.__name__,
         "loss": loss.item(),
         "acc": acc,
@@ -465,3 +466,29 @@ def save_best_model(eval_results: List[dict], model_name: str, models_dir="model
     with open(f"{results_file}_{time.strftime('%d-%m-%Y_%H-%M-%S')}.txt", "w") as f:
         f.write(str(eval_results))
         
+def make_predictions(model: torch.nn.Module,
+                     data: list,
+                     device: torch.device):
+    """Makes predictions on data using model.
+
+    Args:
+        model (torch.nn.Module): trained PyTorch model.
+        data (list): data to make predictions on.
+        device (torch.device): target device to compute on.
+
+    Returns:
+        torch.Tensor: predictions made on data.
+    """
+    model.to(device)
+    model.eval()
+
+    pred_probs_list = []
+
+    with torch.inference_mode():
+        for sample in data:
+            sample = torch.unsqueeze(sample, dim=0).to(device)
+            pred_logits = model(sample)
+            pred_probs = torch.softmax(pred_logits.squeeze(), dim=0)
+            pred_probs_list.append(pred_probs.cpu())
+        
+    return torch.stack(pred_probs_list)
