@@ -128,13 +128,13 @@ class AlexNet(nn.Module):
             nn.Conv2d(in_channels=3, out_channels=96, kernel_size=11, stride=4),
             nn.BatchNorm2d(num_features=96),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.MaxPool2d(kernel_size=3, stride=1),
         )
         self.layer_2 = nn.Sequential(
             nn.Conv2d(in_channels=96, out_channels=256, kernel_size=5, padding=2),
             nn.BatchNorm2d(num_features=256),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.MaxPool2d(kernel_size=3, stride=1),
         )
         self.layer_3 = nn.Sequential(
             nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, padding=1),
@@ -155,7 +155,7 @@ class AlexNet(nn.Module):
 
         self.fully_connected_1 = nn.Sequential(
             nn.Dropout(p=0.5), # Dropout is a regularization technique that randomly drops a percentage of the neurons in a layer during training. This forces the network to learn more robust features, which leads to better performance on the test set. Dropout also reduces overfitting, which leads to better performance on the test set.
-            nn.Linear(in_features=256*6*6, out_features=4096), # In = 9216
+            nn.Linear(in_features=256*24*24, out_features=4096), # In = 9216
             nn.ReLU(),
         )
         self.fully_connected_2 = nn.Sequential(
@@ -180,3 +180,35 @@ class AlexNet(nn.Module):
         out = self.fully_connected_3(out) # torch.Size([1, 101])
 
         return out # torch.Size([1, 101])
+
+# Trying the most simple variation of the "AlexNet" model that may be better suited for the Food101 dataset
+class JordanNet(nn.Module):
+    def __init__(self, input_shape: int, hidden_units: int, output_shape: int):
+        super().__init__()
+
+        self.conv_layer_stack = nn.Sequential(
+            nn.Conv2d(in_channels=input_shape, out_channels=hidden_units, kernel_size=3, padding=1, stride=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+
+            nn.Conv2d(in_channels=hidden_units, out_channels=hidden_units, kernel_size=3, padding=1, stride=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+
+            nn.Conv2d(in_channels=hidden_units, out_channels=hidden_units, kernel_size=3, padding=1, stride=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+        )
+
+        self.fully_connected_layer_stack = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(in_features=hidden_units*8*8, out_features=hidden_units),
+            nn.ReLU(),
+            nn.Linear(in_features=hidden_units, out_features=output_shape),
+        )
+
+
+    def forward(self, x):
+        out = self.conv_layer_stack(x)
+        out = self.fully_connected_layer_stack(out)
+        return out

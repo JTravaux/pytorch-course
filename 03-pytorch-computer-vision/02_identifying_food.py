@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from torch import nn
 import tqdm
-from models import AlexNet, Food101V0
+from models import AlexNet, FashionMNISTModelV2
 from torchvision import datasets, transforms
 from torchmetrics import ConfusionMatrix
 from mlxtend.plotting import plot_confusion_matrix
@@ -16,7 +16,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 # 1. Get Dataset(s)
 # ===================
 data_transformers = transforms.Compose([
-    transforms.Resize(size=(227, 227)),
+    transforms.Resize(size=(225, 225)),
     transforms.ToTensor()
 ])
 
@@ -33,17 +33,14 @@ test_data = datasets.Food101(root="data",
 print(len(train_data), len(test_data))
 print(f"Image shape: {train_data[0][0].shape}") # 3, 227, 227
 
-random_train_idx = torch.randint(0, len(train_data), (1,)).item()
-show_image(image_tensor=train_data[random_train_idx][0], label=train_data.classes[train_data[random_train_idx][1]])
-
-classes = train_data.classes
+classes = train_data.classes 
 num_classes = len(classes) # 101
 
 print(f"Number of classes: {num_classes}")
 print(f"Classes: {classes}")
 
 # Create Dataloaders
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 train_loader = torch.utils.data.DataLoader(dataset=train_data, batch_size=BATCH_SIZE, shuffle=True)
 test_loader = torch.utils.data.DataLoader(dataset=test_data, batch_size=BATCH_SIZE, shuffle=False)
 
@@ -54,7 +51,6 @@ print(f"Data shape: {next(iter(train_loader))[0].shape}") # 64, 3, 227, 227
 # ===================
 models = [
     AlexNet(num_classes=num_classes).to(device),
-    Food101V0(input_shape=3, hidden_units=32, output_shape=num_classes).to(device)
 ]
 
 # sample = models[0](torch.randn(1, 3, 227, 227).to(device))
@@ -65,7 +61,7 @@ loss_fn = nn.CrossEntropyLoss()
 # ===================
 # 3. Train Model
 # ===================
-EPOCHS = 3
+EPOCHS = 1
 eval_results = []
 train_models = True
 
@@ -81,6 +77,8 @@ if train_models:
         print(f"\nTraining model {idx + 1}/{len(models)} ({model.__class__.__name__}) on {device}...")
 
         for epoch in range(EPOCHS):
+            print(f"\nEpoch {epoch + 1}/{EPOCHS}")
+
             start_time = time.time()
             train_step(model=model, data_loader=train_loader, loss_fn=loss_fn, optimizer=optimizer, device=device, verbose=True)
             test_step(model=model, data_loader=test_loader, loss_fn=loss_fn, device=device, verbose=True)

@@ -353,27 +353,34 @@ def train_step(model: torch.nn.Module,
     model.to(device)
     train_loss, train_acc = 0.0, 0.0
 
+    # Variables to help plot loss curve
+    losses = []
+    accuracies = []
+
     for batch, (X, y) in enumerate(data_loader):
-        print(f"Processing batch {batch} of {len(data_loader)}...")
         X, y = X.to(device), y.to(device)
 
         y_pred = model(X)
         loss = loss_fn(y_pred, y)
+        acc = accuracy_fn(y_true=y, y_pred=y_pred.argmax(dim=1))
 
-        train_acc +=  accuracy_fn(y_true=y, y_pred=y_pred.argmax(dim=1))
+        train_acc +=  acc
         train_loss += loss.item()
+        losses.append(loss.item())
+        accuracies.append(acc)
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        print(f"Batch {batch} | Train Loss: {loss.item():.4f} | Train Acc: {train_acc / (batch + 1):.2f}%")
+        print(f"Batch {batch}/{len(data_loader)} | Batch Loss: {loss.item():.4f} | Batch Acc: {acc:.2f}%")
+
+        if batch > 0 and batch % 100 == 0:
+            print(f"Backing up model to models/{model.__class__.__name__}_backup.pth...")
+            torch.save(model.state_dict(), f"models/{model.__class__.__name__}_backup.pth")
 
     train_loss /= len(data_loader)
     train_acc /= len(data_loader)
-
-    if verbose:
-        print(f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
 
     return {
         "train_loss": train_loss,
