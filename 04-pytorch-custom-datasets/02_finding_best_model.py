@@ -15,7 +15,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 train_dir = Path("data") / "pizza_steak_sushi" / "train"
 test_dir = Path("data") / "pizza_steak_sushi" / "test"
 
-download_data(source="https://github.com/mrdbourke/pytorch-deep-learning/raw/main/data/pizza_steak_sushi_20_percent.zip", destination="pizza_steak_sushi")
+download_data(source="https://github.com/JTravaux/pytorch-course/raw/main/pizza_steak_sushi_100_percent.zip", destination="pizza_steak_sushi")
 
 # ==========================================
 # 2. Prepare transformers and data loaders
@@ -40,6 +40,10 @@ class_names = train_data.classes
 train_dataloader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
 test_dataloader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
 
+# Amount of data
+print(f"Length of train data: {len(train_data)}")
+print(f"Length of test data: {len(test_data)}")
+
 # ============================================
 # 3. Setup Models, Loss Functions, Optimizers
 # ============================================
@@ -51,7 +55,14 @@ models = [
         "model": model,
         "model_name": "FoodVisionMini v1",
         "optimizer": torch.optim.Adam(model.parameters(), lr=0.001),
-        "epochs": 500,
+        "epochs": 25,
+        "results": None
+    },
+    {
+        "model": model,
+        "model_name": "FoodVisionMini v2",
+        "optimizer": torch.optim.SGD(model.parameters(), lr=0.001),
+        "epochs": 25,
         "results": None
     },
 ]
