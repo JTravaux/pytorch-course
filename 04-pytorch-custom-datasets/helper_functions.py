@@ -9,19 +9,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 from PIL import Image
-
+from tqdm.auto import tqdm
 from torch import nn
-
 import os
 import zipfile
 from pathlib import Path
-
 import requests
 
-# Walk through an image classification directory and find out how many files (images)
-# are in each subdirectory.
-import os
-import tqdm
 
 def walk_through_dir(dir_path):
     """
