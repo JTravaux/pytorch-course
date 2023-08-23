@@ -20,7 +20,7 @@ download_data(source="https://github.com/JTravaux/pytorch-course/raw/main/pizza_
 # ==========================================
 # 2. Prepare transformers and data loaders
 # ==========================================
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 
 train_transforms = transforms.Compose([
     transforms.Resize(size=(64, 64)),
@@ -47,21 +47,24 @@ print(f"Length of test data: {len(test_data)}")
 # ============================================
 # 3. Setup Models, Loss Functions, Optimizers
 # ============================================
-model = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
-model.load_state_dict(torch.load("models/04_food_vision_model_best.pth"))
+model_1 = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
+model_1.load_state_dict(torch.load("models/04_food_vision_model_best.pth"))
+
+model_2 = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
+model_2.load_state_dict(torch.load("models/04_food_vision_model_best.pth"))
 
 models = [
     {
-        "model": model,
+        "model": model_1,
         "model_name": "FoodVisionMini v1",
-        "optimizer": torch.optim.Adam(model.parameters(), lr=0.001),
+        "optimizer": torch.optim.Adam(model_1.parameters(), lr=0.00001),
         "epochs": 25,
         "results": None
     },
     {
-        "model": model,
+        "model": model_2,
         "model_name": "FoodVisionMini v2",
-        "optimizer": torch.optim.SGD(model.parameters(), lr=0.001),
+        "optimizer": torch.optim.SGD(model_2.parameters(), lr=0.00001),
         "epochs": 25,
         "results": None
     },
