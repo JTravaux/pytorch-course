@@ -15,7 +15,7 @@ idx_to_class = {v: k for k, v in classes.items()}
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Load the model
-model = FoodVisionMini(input_shape=3, hidden_units=128, output_shape=3).to(device)
+model = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=3).to(device)
 model.load_state_dict(torch.load("models/04_food_vision_model_best.pth"))
 
 # Download (or use) custom image
