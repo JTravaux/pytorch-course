@@ -15,6 +15,7 @@ import os
 import zipfile
 from pathlib import Path
 import requests
+from PIL import Image
 
 
 def walk_through_dir(dir_path):
@@ -238,6 +239,57 @@ def pred_and_plot_image(
         title = f"Pred: {target_image_pred_label} | Prob: {target_image_pred_probs.max().cpu():.3f}"
     plt.title(title)
     plt.axis(False)
+
+def pred_image(
+    model: torch.nn.Module,
+    image: Image,
+    class_names: List[str] = None,
+    transform=None,
+    device: torch.device = "cuda" if torch.cuda.is_available() else "cpu",
+):
+    """Makes a prediction on a target image with a trained model.
+
+    Args:
+        model (torch.nn.Module): trained PyTorch image classification model.
+        image_path (str): filepath to target image.
+        class_names (List[str], optional): different class names for target image. Defaults to None.
+        transform (_type_, optional): transform of target image. Defaults to None.
+        device (torch.device, optional): target device to compute on. Defaults to "cuda" if torch.cuda.is_available() else "cpu".
+    
+    Returns:
+       The predicted class name and probability of the target image.
+
+    Example usage:
+        label = pred_image(model=model,
+                            image="some_image.jpeg",
+                            class_names=["class_1", "class_2", "class_3"],
+                            transform=torchvision.transforms.ToTensor(),
+                            device=device)
+    """
+
+    target_image = transform(image)
+    model.to(device)
+
+    start_time = time.time()
+
+    model.eval()
+    with torch.inference_mode():
+        # Add an extra dimension to the image
+        target_image = target_image.unsqueeze(dim=0)
+
+        # Make a prediction on image with an extra dimension and send it to the target device
+        target_image_pred = model(target_image.to(device))
+
+    end_time = time.time()
+
+    # Convert logits -> prediction probabilities (using torch.softmax() for multi-class classification)
+    target_image_pred_probs = torch.softmax(target_image_pred, dim=1)
+
+    # Convert prediction probabilities -> prediction labels
+    target_image_pred_label = torch.argmax(target_image_pred_probs, dim=1)
+
+    #  Return the label and probability
+    return class_names[target_image_pred_label.cpu()], target_image_pred_probs.max().cpu().item(), end_time - start_time
 
 def set_seeds(seed: int=42):
     """Sets random sets for torch operations.

@@ -43,34 +43,14 @@ test_dataloader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
 # ============================================
 # 3. Setup Models, Loss Functions, Optimizers
 # ============================================
-foodVisionMiniV1 = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
-foodVisionMiniV2 = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
-foodVisionMiniV3 = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
+model = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
+model.load_state_dict(torch.load("models/04_food_vision_model_best.pth"))
 
-foodVisionMiniV1.load_state_dict(torch.load("models/04_food_vision_model_best.pth"))
-foodVisionMiniV2.load_state_dict(torch.load("models/04_food_vision_model_best.pth"))
-foodVisionMiniV3.load_state_dict(torch.load("models/04_food_vision_model_best.pth"))
-
-eval_results_list = []
 models = [
     {
-        "model": foodVisionMiniV1,
+        "model": model,
         "model_name": "FoodVisionMini v1",
-        "optimizer": torch.optim.Adam(foodVisionMiniV1.parameters(), lr=0.001),
-        "epochs": 500,
-        "results": None
-    },
-    {
-        "model": foodVisionMiniV2,
-        "model_name": "FoodVisionMini v2",
-        "optimizer": torch.optim.Adam(foodVisionMiniV2.parameters(), lr=0.01),
-        "epochs": 500,
-        "results": None
-    },
-    {
-        "model": foodVisionMiniV3,
-        "model_name": "FoodVisionMini v3",
-        "optimizer": torch.optim.Adam(foodVisionMiniV3.parameters(), lr=0.0001),
+        "optimizer": torch.optim.Adam(model.parameters(), lr=0.001),
         "epochs": 500,
         "results": None
     },
@@ -79,6 +59,7 @@ models = [
 # ================================
 # 4. Train and Evaluate the Models
 # ================================
+eval_results_list = []
 plt.figure(figsize=(15, 10))
 
 for idx, data in enumerate(models):
