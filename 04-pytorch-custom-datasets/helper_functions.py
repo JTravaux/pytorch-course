@@ -520,7 +520,7 @@ def print_eval_results_table(eval_results: List[dict]) -> None:
 
 def save_best_model(eval_results: List[dict], model_name: str, models_dir="models", results_dir: str = "data") -> None:
     results_file = f"{results_dir}/model_eval_results"
-    results_file_acc = f"{results_dir}/model_eval_results_acc.txt"
+    results_file_acc = f"{models_dir}/{model_name}.txt"
 
     # Sort eval_results by accuracy
     eval_results.sort(key=lambda x: x["acc"], reverse=True)

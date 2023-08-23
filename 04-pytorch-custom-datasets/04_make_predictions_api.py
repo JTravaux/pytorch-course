@@ -11,7 +11,7 @@ from PIL import Image
 app = Flask(__name__)
 
 model = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=3).to("cuda")
-model.load_state_dict(load("../models/04_food_vision_model_best.pth"))
+model.load_state_dict(load("models/04_food_vision_model_best.pth"))
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -25,7 +25,8 @@ def predict():
     return {
         "prediction": prediction[0],
         "probability": prediction[1],
-        "time_taken": prediction[2],
+        "time_s": prediction[2],
+        "time_ms": prediction[2] * 1000
     }
 
 if __name__ == "__main__":

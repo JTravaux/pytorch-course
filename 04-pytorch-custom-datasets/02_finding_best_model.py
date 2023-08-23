@@ -20,7 +20,7 @@ download_data(source="https://github.com/JTravaux/pytorch-course/raw/main/pizza_
 # ==========================================
 # 2. Prepare transformers and data loaders
 # ==========================================
-BATCH_SIZE = 32
+BATCH_SIZE = 128
 
 train_transforms = transforms.Compose([
     transforms.Resize(size=(64, 64)),
