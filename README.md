@@ -6,7 +6,7 @@ This repository contains the code for the PyTorch Introduction course. All code 
 - [x] 01: PyTorch Workflow
 - [x] 02: Classification Models (Binary & Multiclass)
 - [x] 03: Computer Vision
-- [ ] 04: Custom Datasets & DataLoaders
+- [x] 04: Custom Datasets & DataLoaders
 - [ ] 05: Going Modular
 - [ ] 06: Transfer Learning
 - [ ] 07: Experiment Tracking
@@ -15,7 +15,7 @@ This repository contains the code for the PyTorch Introduction course. All code 
 
 ## About the Course
 
-The course is by [Daniel Bourke](https://www.mrdbourke.com/) and is roughly 25 hours long. It can be found for free on [YouTube](https://www.youtube.com/watch?v=V_xro1bcAuA). The following are some resources that are used throughout the course.
+The course is by [Daniel Bourke](https://www.mrdbourke.com/) and is roughly 25 hours (+20 hours paid) long. Most of it can be found for free on [YouTube](https://www.youtube.com/watch?v=V_xro1bcAuA). The following are some resources that are used throughout the course.
 
 1. [YouTube Video Tutorial](https://www.youtube.com/watch?v=V_xro1bcAuA): This video tutorial offers a visual walkthrough of PyTorch concepts, making it easier to grasp key concepts.
 

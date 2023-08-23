@@ -7,6 +7,8 @@ import time
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
+import random
+from PIL import Image
 
 from torch import nn
 
@@ -19,6 +21,7 @@ import requests
 # Walk through an image classification directory and find out how many files (images)
 # are in each subdirectory.
 import os
+import tqdm
 
 def walk_through_dir(dir_path):
     """
@@ -342,37 +345,30 @@ def train_step(model: torch.nn.Module,
                loss_fn: torch.nn.Module, 
                optimizer: torch.optim.Optimizer, 
                device = "cpu", 
-               accuracy_fn = accuracy_fn,
-               verbose: bool = True):
+               backups_during_training: bool = True):
     """Performs a single training step (forward pass, backward pass, weights update) and returns the loss and accuracy for the batch."""
 
     model.train()
     model.to(device)
     train_loss, train_acc = 0.0, 0.0
 
-    # Variables to help plot loss curve
-    losses = []
-    accuracies = []
-
+     # Loop through data loader data batches
     for batch, (X, y) in enumerate(data_loader):
         X, y = X.to(device), y.to(device)
-
         y_pred = model(X)
-        loss = loss_fn(y_pred, y)
-        acc = accuracy_fn(y_true=y, y_pred=y_pred.argmax(dim=1))
 
-        train_acc +=  acc
-        train_loss += loss.item()
-        losses.append(loss.item())
-        accuracies.append(acc)
+        loss = loss_fn(y_pred, y)
+        train_loss += loss.item() 
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        print(f"Batch {batch}/{len(data_loader)} | Batch Loss: {loss.item():.4f} | Batch Acc: {acc:.2f}%")
+        # Calculate and accumulate accuracy metric across all batches
+        y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
+        train_acc += (y_pred_class == y).sum().item()/len(y_pred)
 
-        if batch > 0 and batch % 100 == 0:
+        if backups_during_training and batch > 0 and batch % 100 == 0:
             print(f"Backing up model to models/{model.__class__.__name__}_backup.pth...")
             torch.save(model.state_dict(), f"models/{model.__class__.__name__}_backup.pth")
 
@@ -387,9 +383,7 @@ def train_step(model: torch.nn.Module,
 def test_step(model: torch.nn.Module, 
               data_loader: torch.utils.data.DataLoader, 
               loss_fn: torch.nn.Module, 
-              device = "cpu", 
-              accuracy_fn = accuracy_fn,
-              verbose: bool = True):
+              device = "cpu"):
     """Performs a single evaluation step (forward pass) and returns the loss and accuracy for the batch."""
 
     model.eval()
@@ -397,25 +391,64 @@ def test_step(model: torch.nn.Module,
     test_loss, test_acc = 0.0, 0.0
 
     with torch.inference_mode():
-        for X, y in data_loader:
+        for batch, (X, y) in enumerate(data_loader):
+            # Send data to target device
             X, y = X.to(device), y.to(device)
+    
+            # 1. Forward pass
+            test_pred_logits = model(X)
 
-            y_pred = model(X)
-            loss = loss_fn(y_pred, y)
-
-            test_acc +=  accuracy_fn(y_true=y, y_pred=y_pred.argmax(dim=1))
+            # 2. Calculate and accumulate loss
+            loss = loss_fn(test_pred_logits, y)
             test_loss += loss.item()
-
-    test_loss /= len(data_loader)
-    test_acc /= len(data_loader)
-
-    if verbose:
-        print(f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.2f}%")
+            
+            # Calculate and accumulate accuracy
+            test_pred_labels = test_pred_logits.argmax(dim=1)
+            test_acc += ((test_pred_labels == y).sum().item()/len(test_pred_labels))
+            
+    # Adjust metrics to get average loss and accuracy per batch 
+    test_loss = test_loss / len(data_loader)
+    test_acc = test_acc / len(data_loader)
 
     return {
         "test_loss": test_loss,
         "test_acc": test_acc,
     }
+
+def train_model(model: torch.nn.Module,
+                train_data: torch.utils.data.DataLoader,
+                test_data: torch.utils.data.DataLoader,
+                optimizer: torch.optim.Optimizer,
+                loss_fn: torch.nn.Module = nn.CrossEntropyLoss(),
+                device = "cuda" if torch.cuda.is_available() else "cpu",
+                epochs: int = 10,
+                backups_during_training: bool = True):
+    """Trains a PyTorch model and returns the results of training."""
+
+    epoch_results = {
+        "train_loss": [],
+        "train_acc": [],
+        "test_loss": [],
+        "test_acc": [],
+    }
+
+    print(f"\nTraining {model.__class__.__name__} for {epochs} epochs on {device}...")
+    start_time = time.time()
+
+    for epoch in tqdm(range(epochs)):
+        train_res = train_step(model=model, data_loader=train_data, loss_fn=loss_fn, optimizer=optimizer, device=device, backups_during_training=backups_during_training)
+        test_res = test_step(model=model, data_loader=test_data, loss_fn=loss_fn, device=device)
+
+        epoch_results["train_loss"].append(train_res["train_loss"])
+        epoch_results["train_acc"].append(train_res["train_acc"])
+        epoch_results["test_loss"].append(test_res["test_loss"])
+        epoch_results["test_acc"].append(test_res["test_acc"])
+
+    return {
+        "eval_results": eval_model(model=model, data_loader=test_data, loss_fn=loss_fn, optimizer=optimizer, device=device, start_time=start_time, end_time=time.time(), epochs=epochs),
+        "epoch_results": epoch_results,
+    }
+
 
 def print_eval_results_table(eval_results: List[dict]) -> None:
     """Prints a table of eval_results.
@@ -524,4 +557,51 @@ def show_image(image_tensor: torch.Tensor,
         plt.title(f"Label: {label}")
     if prediction:
         plt.xlabel(f"Prediction: {prediction}, Prob: {prediction_prob:.2f}")
+    plt.show()
+
+def plot_transformed_images(image_paths: list, transform, n=3, seed=42):
+    """Selects random images from image_paths and plots them with transform applied vs without transform applied."""
+    if seed:
+        set_seeds(seed)
+        random.seed(seed)
+    
+    random_image_paths = random.sample(image_paths, k=n)
+
+    for image_path in random_image_paths:
+        with Image.open(image_path) as f:
+            fig, ax = plt.subplots(nrows=1, ncols=2)
+            ax[0].imshow(f)
+            ax[0].set_title(f"Original\nSize: {f.size}")
+            ax[0].axis(False)
+
+            transformed_image = transform(f) # Note: we will need to convert this back to PIL image to plot it, since matplotlib expects color channel last
+            ax[1].imshow(transformed_image.permute(1, 2, 0)) # convert to color channel last (C, H, W) -> (H, W, C)
+            ax[1].set_title(f"Transformed\nShape: {transformed_image.shape}")
+            ax[1].axis(False)
+
+            fig.suptitle(f"Class: {image_path.parent.stem}", fontsize=16)
+            plt.show()
+
+def display_random_images(dataset: torch.utils.data.Dataset, classes: List[str] = None, n: int = 10, display_shape: bool = True):
+    """Displays n random images from dataset with optional class names and shape."""
+    if n > 10:
+        n = 10
+        display_shape = False
+        print(f"n is greater than 10, setting n to 10 and display_shape to False.")
+
+    ncols = n
+    nrows = 1
+    random_indexes = random.sample(range(len(dataset)), k=n)
+    fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols * 4, nrows * 4))
+    for i, index in enumerate(random_indexes):
+        image, label = dataset[index]
+        if classes:
+            label = classes[label]
+        if display_shape:
+            ax[i].imshow(image.permute(1, 2, 0))
+            ax[i].set_title(f"Class: {label}\nShape: {image.shape}")
+        else:
+            ax[i].imshow(image.permute(1, 2, 0))
+            ax[i].set_title(f"Class: {label}")
+        ax[i].axis(False)
     plt.show()
