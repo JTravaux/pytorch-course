@@ -20,7 +20,7 @@ download_data(source="https://github.com/mrdbourke/pytorch-deep-learning/raw/mai
 # ==========================================
 # 2. Prepare transformers and data loaders
 # ==========================================
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 train_transforms = transforms.Compose([
     transforms.Resize(size=(64, 64)),
@@ -57,86 +57,19 @@ models = [
         "results": None
     },
     {
-        "model": foodVisionMiniV1,
+        "model": foodVisionMiniV2,
         "model_name": "FoodVisionMini v2",
-        "optimizer": torch.optim.Adam(foodVisionMiniV1.parameters(), lr=0.01),
+        "optimizer": torch.optim.Adam(foodVisionMiniV2.parameters(), lr=0.001),
         "epochs": 50,
         "results": None
     },
     {
-        "model": foodVisionMiniV1,
+        "model": foodVisionMiniV3,
         "model_name": "FoodVisionMini v3",
-        "optimizer": torch.optim.SGD(foodVisionMiniV1.parameters(), lr=0.001),
+        "optimizer": torch.optim.Adam(foodVisionMiniV3.parameters(), lr=0.001),
         "epochs": 50,
         "results": None
     },
-    {
-        "model": foodVisionMiniV1,
-        "model_name": "FoodVisionMini v4",
-        "optimizer": torch.optim.SGD(foodVisionMiniV1.parameters(), lr=0.01),
-        "epochs": 50,
-        "results": None
-    },
-
-
-    {
-        "model": foodVisionMiniV2,
-        "model_name": "FoodVisionMini v5",
-        "optimizer": torch.optim.Adam(foodVisionMiniV1.parameters(), lr=0.001),
-        "epochs": 50,
-        "results": None
-    },
-    {
-        "model": foodVisionMiniV2,
-        "model_name": "FoodVisionMini v6",
-        "optimizer": torch.optim.Adam(foodVisionMiniV1.parameters(), lr=0.01),
-        "epochs": 50,
-        "results": None
-    },
-    {
-        "model": foodVisionMiniV2,
-        "model_name": "FoodVisionMini v7",
-        "optimizer": torch.optim.SGD(foodVisionMiniV1.parameters(), lr=0.001),
-        "epochs": 50,
-        "results": None
-    },
-    {
-        "model": foodVisionMiniV2,
-        "model_name": "FoodVisionMini v8",
-        "optimizer": torch.optim.SGD(foodVisionMiniV1.parameters(), lr=0.01),
-        "epochs": 50,
-        "results": None
-    },
-
-
-    {
-        "model": foodVisionMiniV3,
-        "model_name": "FoodVisionMini v9",
-        "optimizer": torch.optim.Adam(foodVisionMiniV1.parameters(), lr=0.001),
-        "epochs": 50,
-        "results": None
-    },
-    {
-        "model": foodVisionMiniV3,
-        "model_name": "FoodVisionMini v10",
-        "optimizer": torch.optim.Adam(foodVisionMiniV1.parameters(), lr=0.01),
-        "epochs": 50,
-        "results": None
-    },
-    {
-        "model": foodVisionMiniV3,
-        "model_name": "FoodVisionMini v11",
-        "optimizer": torch.optim.SGD(foodVisionMiniV1.parameters(), lr=0.001),
-        "epochs": 50,
-        "results": None
-    },
-    {
-        "model": foodVisionMiniV3,
-        "model_name": "FoodVisionMini v12",
-        "optimizer": torch.optim.SGD(foodVisionMiniV1.parameters(), lr=0.01),
-        "epochs": 50,
-        "results": None
-    }
 ]
 
 # ================================
@@ -148,6 +81,7 @@ for idx, data in enumerate(models):
     data["results"] = train_model(
         model=data["model"],
         epochs=data["epochs"],
+        name=data["model_name"],
         optimizer=data["optimizer"],
         test_data=test_dataloader,
         train_data=train_dataloader,
