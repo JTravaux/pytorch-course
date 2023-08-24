@@ -50,8 +50,7 @@ print(f"Length of test data: {len(test_data)}")
 # ============================================
 MODEL_NAME = "04_food_vision_model_v2_best" # Indicates model save name/load from name
 
-model_1 = FoodVisionMiniV2(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
-
+model_1 = FoodVisionMiniV2(input_shape=3, hidden_units=128, output_shape=len(class_names)).to(device)
 if os.path.exists(f"models/{MODEL_NAME}.pth"):
     model_1.load_state_dict(torch.load(f"models/{MODEL_NAME}.pth"))
 
@@ -60,7 +59,7 @@ models = [
         "model": model_1,
         "model_name": "v1",
         "optimizer": torch.optim.Adam(model_1.parameters(), lr=0.001),
-        "epochs": 25,
+        "epochs": 500,
         "results": None
     },
 ]
