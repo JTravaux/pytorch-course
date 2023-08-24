@@ -59,7 +59,7 @@ models = [
         "model": model_1,
         "model_name": "v1",
         "optimizer": torch.optim.Adam(model_1.parameters(), lr=0.001),
-        "epochs": 500,
+        "epochs": 1000,
         "results": None
     },
 ]
