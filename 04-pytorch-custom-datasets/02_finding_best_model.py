@@ -1,8 +1,9 @@
+import os
 import torch
 import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
-from models import FoodVisionMini
+from models import FoodVisionMini, FoodVisionMiniV2
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from helper_functions import train_model, download_data, save_best_model, print_eval_results_table, plot_loss_curves
@@ -47,24 +48,18 @@ print(f"Length of test data: {len(test_data)}")
 # ============================================
 # 3. Setup Models, Loss Functions, Optimizers
 # ============================================
-model_1 = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
-model_1.load_state_dict(torch.load("models/04_food_vision_model_best.pth"))
+MODEL_NAME = "04_food_vision_model_v2_best" # Indicates model save name/load from name
 
-model_2 = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
-model_2.load_state_dict(torch.load("models/04_food_vision_model_best.pth"))
+model_1 = FoodVisionMiniV2(input_shape=3, hidden_units=64, output_shape=len(class_names)).to(device)
+
+if os.path.exists(f"models/{MODEL_NAME}.pth"):
+    model_1.load_state_dict(torch.load(f"models/{MODEL_NAME}.pth"))
 
 models = [
     {
         "model": model_1,
-        "model_name": "FoodVisionMini v1",
-        "optimizer": torch.optim.Adam(model_1.parameters(), lr=0.00001),
-        "epochs": 25,
-        "results": None
-    },
-    {
-        "model": model_2,
-        "model_name": "FoodVisionMini v2",
-        "optimizer": torch.optim.SGD(model_2.parameters(), lr=0.00001),
+        "model_name": "v1",
+        "optimizer": torch.optim.Adam(model_1.parameters(), lr=0.001),
         "epochs": 25,
         "results": None
     },
@@ -115,5 +110,5 @@ for idx, data in enumerate(models):
     plt.legend()
 
 print_eval_results_table(eval_results_list)
-save_best_model(eval_results=eval_results_list, model_name="04_food_vision_model_best", models_dir="models", results_dir="data/pizza_steak_sushi")
+save_best_model(eval_results=eval_results_list, model_name=MODEL_NAME, models_dir="models", results_dir="data/pizza_steak_sushi")
 plt.show()
