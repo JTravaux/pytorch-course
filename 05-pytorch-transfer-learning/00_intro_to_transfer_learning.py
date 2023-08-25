@@ -12,6 +12,7 @@
     # 3. timm (Pytorch Image Models) library (https://github.com/huggingface/pytorch-image-models)
     # 4. Papers with code (https://paperswithcode.com/)
 
+import os
 import torch
 import torchvision
 from torch import nn
@@ -19,7 +20,7 @@ from pathlib import Path
 from torchinfo import summary
 import matplotlib.pyplot as plt
 from torchvision import datasets, transforms
-from helper_functions import download_data, create_dataloaders, train_model, print_eval_results_table, plot_loss_curves
+from helper_functions import download_data, create_dataloaders, train_model, print_eval_results_table, plot_loss_curves, save_best_model
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -27,8 +28,9 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 # 1. Get Data & Transforms Ready
 # ============================================
 BATCH_SIZE = 32
+MODEL_NAME = "FoodVisionMiniV2_EfficientNetB0"
 
-folder = "pizza_steak_sushi_20_percent"
+folder = "pizza_steak_sushi"
 image_path = Path("data/") / folder
 train_dir = image_path / "train"
 test_dir = image_path / "test"
@@ -111,6 +113,9 @@ model.classifier = nn.Sequential(
     nn.Linear(in_features=1280, out_features=len(class_names))
 ).to(device)
 
+if os.path.exists(f"models/{MODEL_NAME}.pth"):
+    model.load_state_dict(torch.load(f"models/{MODEL_NAME}.pth"))
+
 print("\nAfter Freeze:")
 summary(model=model,
         input_size=(BATCH_SIZE, 3, 224, 224),
@@ -136,11 +141,13 @@ res = train_model(model=model,
                 loss_fn=loss_fn,
                 optimizer=optimizer,
                 device=device,
-                epochs=50,
+                name=MODEL_NAME,
+                epochs=100,
                 backups_during_training=False)
 
 eval_results.append(res["eval_results"])
 print_eval_results_table(eval_results)
-
+save_best_model(eval_results=eval_results, model_name=MODEL_NAME, models_dir="models", results_dir="data/pizza_steak_sushi_20_percent")
 plot_loss_curves(res["epoch_results"])
 plt.show()
+
