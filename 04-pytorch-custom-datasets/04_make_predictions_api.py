@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from torch import load
-from models import FoodVisionMini
+from models import FoodVisionMini, FoodVisionMiniV2
 from torchvision import transforms
 from matplotlib import pyplot as plt
 from helper_functions import pred_image
@@ -10,8 +10,8 @@ from PIL import Image
 
 app = Flask(__name__)
 
-model = FoodVisionMini(input_shape=3, hidden_units=64, output_shape=3).to("cuda")
-model.load_state_dict(load("models/04_food_vision_model_best.pth"))
+model = FoodVisionMiniV2(input_shape=3, hidden_units=128, output_shape=3).to("cuda")
+model.load_state_dict(load("models/04_food_vision_model_v2_best.pth"))
 
 @app.route("/predict", methods=["POST"])
 def predict():
