@@ -14,6 +14,7 @@
 
 import os
 import torch
+import wandb
 import torchvision
 from torch import nn
 from pathlib import Path
@@ -24,18 +25,31 @@ from helper_functions import download_data, create_dataloaders, train_model, pri
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+EPOCHS = 25
+DATA_FOLDER = "pizza_steak_sushi"
+MODEL_NAME = "FoodVisionMiniV2_EfficientNetB0"
+
+# start a new wandb run to track this script
+wandb.init(
+    project=MODEL_NAME,
+    config={
+        "learning_rate": 0.001,
+        "architecture": "CNN",
+        "dataset": DATA_FOLDER,
+        "epochs": EPOCHS,
+    }
+)
+
 # ============================================
 # 1. Get Data & Transforms Ready
 # ============================================
 BATCH_SIZE = 32
-MODEL_NAME = "FoodVisionMiniV2_EfficientNetB0"
 
-folder = "pizza_steak_sushi"
-image_path = Path("data/") / folder
+image_path = Path("data/") / DATA_FOLDER
 train_dir = image_path / "train"
 test_dir = image_path / "test"
 
-download_data(source="https://github.com/mrdbourke/pytorch-deep-learning/raw/main/data/pizza_steak_sushi_20_percent.zip", destination=folder) # 10%: https://github.com/mrdbourke/pytorch-deep-learning/raw/main/data/pizza_steak_sushi.zip
+download_data(source="https://github.com/mrdbourke/pytorch-deep-learning/raw/main/data/pizza_steak_sushi_20_percent.zip", destination=DATA_FOLDER) # 10%: https://github.com/mrdbourke/pytorch-deep-learning/raw/main/data/pizza_steak_sushi.zip
 
 # When using a pretrained model, it's important that your custom data going into the model is prepared in the same way as the original training data that went into the model.
 # Since we'll be using a pretrained model from torchvision.models, there's a specific transform we need to prepare our images first...
@@ -142,12 +156,15 @@ res = train_model(model=model,
                 optimizer=optimizer,
                 device=device,
                 name=MODEL_NAME,
-                epochs=100,
+                epochs=EPOCHS,
                 backups_during_training=False)
 
 eval_results.append(res["eval_results"])
 print_eval_results_table(eval_results)
 save_best_model(eval_results=eval_results, model_name=MODEL_NAME, models_dir="models", results_dir="data/pizza_steak_sushi_20_percent")
 plot_loss_curves(res["epoch_results"])
+wandb.finish()
 plt.show()
 
+# Tip: fine-tuning usually works best if you have lots of custom data, where as, feature extraction is typically better if you have less custom data.
+# The above is feature extraction, where we've taken the patterns of a pretrained model and adjusted the output layer to suit our own problem.

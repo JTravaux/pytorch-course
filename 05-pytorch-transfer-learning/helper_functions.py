@@ -4,6 +4,7 @@ A series of helper functions used throughout the course.
 If a function gets defined once and could be used over and over, it'll go in here.
 """
 import time
+import wandb
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
@@ -424,6 +425,8 @@ def train_step(model: torch.nn.Module,
     train_loss /= len(data_loader)
     train_acc /= len(data_loader)
 
+    wandb.log({ "train_acc": train_acc, "train_loss": train_loss })
+
     return {
         "train_loss": train_loss,
         "train_acc": train_acc,
@@ -455,9 +458,12 @@ def test_step(model: torch.nn.Module,
             test_pred_labels = test_pred_logits.argmax(dim=1)
             test_acc += ((test_pred_labels == y).sum().item()/len(test_pred_labels))
             
+
     # Adjust metrics to get average loss and accuracy per batch 
     test_loss = test_loss / len(data_loader)
     test_acc = test_acc / len(data_loader)
+
+    wandb.log({ "test_acc": test_acc, "test_loss": test_loss })
 
     return {
         "test_loss": test_loss,
