@@ -8,7 +8,7 @@ This repository contains the code for the PyTorch Introduction course. All code 
 - [x] 03: Computer Vision
 - [x] 04: Custom Datasets & DataLoaders
 - [x] 05: Going Modular
-- [ ] 06: Transfer Learning
+- [x] 06: Transfer Learning
 - [ ] 07: Experiment Tracking
 - [ ] 08: PyTorch Paper Replication
 - [ ] 09: Model Deployment
