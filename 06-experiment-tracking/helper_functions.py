@@ -3,6 +3,7 @@ A series of helper functions used throughout the course.
 
 If a function gets defined once and could be used over and over, it'll go in here.
 """
+import shutil
 import time
 import wandb
 import torch
@@ -350,6 +351,45 @@ def download_data(source: str,
             os.remove(data_path / target_file)
     
     return image_path
+
+def split_data(folder_name: str,
+               percentages: list = [0.1, 0.3], # 10%, 30%, 50%
+               base_path: str = "data") -> None:
+    """
+    Takes a base data folder and replicates the data into train and test sets of specified sizes.
+
+    Expected folder structure: base_path/folder_name/(train/test)/label/image.jpg
+
+        base_path
+        └── folder_name
+            ├── train
+            │   ├── label_1 
+            │   ├── label_2
+            │   └── ...
+            └── test
+                ├── label_1 
+                ├── label_2
+                └── ...    
+    """
+    base_path = Path("data")
+    image_path = base_path / folder_name
+
+    for percentage in percentages:
+        shutil.rmtree(base_path / f"{folder_name}_{int(percentage * 100)}_percent", ignore_errors=True)
+
+        for folder in ["train", "test"]:
+            for class_folder in os.listdir(image_path / folder):
+                num_images_in_class = len(os.listdir(image_path / folder / class_folder))
+                print(f"Copying {int(num_images_in_class * percentage)} samples into {folder}/{class_folder}...")
+
+                new_folder = base_path / f"{folder_name}_{int(percentage * 100)}_percent" / folder / class_folder
+                new_folder.mkdir(parents=True, exist_ok=True)
+
+                class_folder_dir = os.listdir(image_path / folder / class_folder)
+                files_to_copy = int(len(class_folder_dir) * percentage)
+
+                for file in random.sample(class_folder_dir, files_to_copy):
+                    shutil.copyfile(src=image_path / folder / class_folder / file, dst=new_folder / file)
 
 def eval_model(
         model: torch.nn.Module, 
